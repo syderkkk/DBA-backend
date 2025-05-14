@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class IsUserAuth
+class IsProfessor
 {
     /**
      * Handle an incoming request.
@@ -15,10 +15,11 @@ class IsUserAuth
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (auth('api')->user()) {
+        $user = auth('api')->user();
+        if ($user && $user->role === 'professor') {
             return $next($request);
         } else {
-            return response()->json(['message' => 'Unauthorized/Sesion'], 401);
+            return response()->json(['message' => 'You are not a PROFESSOR'], 403);
         }
     }
 }

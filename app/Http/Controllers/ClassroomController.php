@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Classroom;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -91,5 +92,59 @@ class ClassroomController extends Controller
         }
         $classroom->delete();
         return response()->json(['message' => 'Classroom deleted sucessfully'], 200);
+    }
+
+
+
+    public function addUserToClassroom(Request $request, $classroomId)
+    {
+        $classroom = Classroom::find($classroomId);
+
+        if (!$classroom) {
+            return response()->json(['message' => 'Classroom not found'], 404);
+        }
+
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        // Verifica si el usuario ya está inscrito
+        if ($classroom->users()->where('user_id', $user->id)->exists()) {
+            return response()->json(['message' => 'El usuario ya está inscrito en este classroom'], 409);
+        }
+
+        // Adjunta el usuario al classroom con datos extra
+        $classroom->users()->attach($user->id, [
+            'user_name' => $user->name,
+            'user_email' => $user->email,
+        ]);
+
+        return response()->json(['message' => 'Usuario inscrito correctamente'], 201);
+    }
+
+    public function removeUserFromClassroom(Request $request, $classroomId)
+    {
+        $userId = $request->input('user_id');
+        $classroom = Classroom::find($classroomId);
+
+        if (!$classroom) {
+            return response()->json(['message' => 'Classroom not found'], 404);
+        }
+
+        $classroom->users()->detach($userId);
+        return response()->json(['message' => 'Usuario removido correctamente'], 200);
+    }
+
+    public function getUsersInClassroom($classroomId)
+    {
+        $classroom = Classroom::find($classroomId);
+
+        if (!$classroom) {
+            return response()->json(['message' => 'Classroom not found'], 404);
+        }
+
+        $users = $classroom->users;
+        return response()->json($users, 200); // 200: OK
     }
 }

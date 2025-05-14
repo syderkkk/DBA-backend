@@ -11,10 +11,15 @@ class Classroom extends Model
     //
     use HasFactory;
     protected $fillable = [
-    'title',
-    'description',
-    'max_capacity',
-    'join_code',
-    'professor_id',
-];
+        'title',
+        'description',
+        'max_capacity',
+        'join_code',
+        'professor_id',
+    ];
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'classroom_user', 'classroom_id', 'user_id');
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Classroom;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -16,9 +17,25 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         User::factory()->create([
-            'name' => 'Test User',
+            'name' => 'Italo',
             'role' => 'admin',
-            'email' => 'test@example.com',
+            'email' => 'italo@gmail.com',
+            'password' => bcrypt('a322'),
+        ]);
+
+        User::factory()->create([
+            'name' => 'Maricela',
+            'role' => 'admin',
+            'email' => 'maricela@gmail.com',
+            'password' => bcrypt('a322'),
+        ]);
+
+        Classroom::factory()->create([
+            'title' => 'Classroom 1',
+            'description' => 'Description of classroom 1',
+            'max_capacity' => 3,
+            'join_code' => 'ABCDE',
+            'professor_id' => 1,
         ]);
     }
 }
