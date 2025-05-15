@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CharacterController;
 use App\Http\Controllers\ClassroomController;
+use App\Http\Controllers\QuestionController;
 use App\Http\Middleware\IsAdmin;
 use App\Http\Middleware\IsProfessor;
 use App\Http\Middleware\IsUserAuth;
@@ -23,8 +24,6 @@ Route::middleware([IsUserAuth::class])->group(function () {
         Route::post('logout', 'logout');
     });
 
-
-
     Route::middleware([IsAdmin::class])->group(function () {
         Route::controller(ClassroomController::class)->group(function () {
             Route::post('classroom', 'createClassroom');
@@ -43,6 +42,12 @@ Route::middleware([IsUserAuth::class])->group(function () {
             Route::get('classroom/{id}/characters', 'getCharactersByClassroom');
             Route::patch('classroom/{id}/character/{characterId}', 'updateCharacterByClassroomAndId');
             Route::delete('classroom/{id}/character/{characterId}', 'deleteCharacterByClassroomAndId');
+        });
+
+        Route::controller(QuestionController::class)->group(function () {
+            Route::post('classroom/{id}/question', 'createQuestion');
+            Route::get('classroom/{id}/questions', 'getQuestionsByClassroom');
+            Route::post('question/{id}/answer', 'answerQuestion');
         });
     });
 
