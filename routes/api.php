@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CharacterController;
 use App\Http\Controllers\ClassroomController;
 use App\Http\Middleware\IsAdmin;
 use App\Http\Middleware\IsProfessor;
@@ -22,7 +23,7 @@ Route::middleware([IsUserAuth::class])->group(function () {
         Route::post('logout', 'logout');
     });
 
-    Route::get('classroom', [ClassroomController::class, 'getClassroom']);
+
 
     Route::middleware([IsAdmin::class])->group(function () {
         Route::controller(ClassroomController::class)->group(function () {
@@ -34,6 +35,14 @@ Route::middleware([IsUserAuth::class])->group(function () {
             Route::post('classroom/{id}/add-user', 'addUserToClassroom');
             Route::post('classroom/{id}/remove-user', 'removeUserFromClassroom');
             Route::get('classroom/{id}/users', 'getUsersInClassroom');
+        });
+
+        Route::controller(CharacterController::class)->group(function () {
+            Route::post('classroom/{id}/character', 'createCharacter');
+            Route::get('classroom/{id}/my-character', 'getMyCharacter'); 
+            Route::get('classroom/{id}/characters', 'getCharactersByClassroom');
+            Route::patch('classroom/{id}/character/{characterId}', 'updateCharacterByClassroomAndId');
+            Route::delete('classroom/{id}/character/{characterId}', 'deleteCharacterByClassroomAndId');
         });
     });
 
