@@ -94,11 +94,9 @@ class ClassroomController extends Controller
         return response()->json(['message' => 'Classroom deleted sucessfully'], 200);
     }
 
-
-
-    public function addUserToClassroom(Request $request, $classroomId)
+    public function addUserToClassroom(Request $request, $id)
     {
-        $classroom = Classroom::find($classroomId);
+        $classroom = Classroom::find($id);
 
         if (!$classroom) {
             return response()->json(['message' => 'Classroom not found'], 404);
@@ -123,22 +121,26 @@ class ClassroomController extends Controller
         return response()->json(['message' => 'Usuario inscrito correctamente'], 201);
     }
 
-    public function removeUserFromClassroom(Request $request, $classroomId)
+    public function removeUserFromClassroom(Request $request, $id)
     {
-        $userId = $request->input('user_id');
-        $classroom = Classroom::find($classroomId);
+        $classroom = Classroom::find($id);
 
         if (!$classroom) {
             return response()->json(['message' => 'Classroom not found'], 404);
         }
 
-        $classroom->users()->detach($userId);
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        $classroom->users()->detach($user->id);
         return response()->json(['message' => 'Usuario removido correctamente'], 200);
     }
 
-    public function getUsersInClassroom($classroomId)
+    public function getUsersInClassroom($id)
     {
-        $classroom = Classroom::find($classroomId);
+        $classroom = Classroom::find($id);
 
         if (!$classroom) {
             return response()->json(['message' => 'Classroom not found'], 404);

@@ -31,11 +31,9 @@ Route::middleware([IsUserAuth::class])->group(function () {
             Route::patch('/classroom/{id}', 'updateClassroomById');
             Route::delete('/classroom/{id}', 'deleteClassroomById');
 
-            Route::post('classroom/{classroomId}/add-user', 'addUserToClassroom');
-            // Remover usuario de classroom
-            Route::post('classroom/{classroomId}/remove-user', 'removeUserFromClassroom');
-            // Obtener usuarios de classroom
-            Route::get('classroom/{classroomId}/users', 'getUsersInClassroom');
+            Route::post('classroom/{id}/add-user', 'addUserToClassroom');
+            Route::post('classroom/{id}/remove-user', 'removeUserFromClassroom');
+            Route::get('classroom/{id}/users', 'getUsersInClassroom');
         });
     });
 
