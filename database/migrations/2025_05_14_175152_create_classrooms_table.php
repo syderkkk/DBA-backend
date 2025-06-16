@@ -18,6 +18,8 @@ return new class extends Migration
             $table->string('join_code', 100)->unique();
             $table->unsignedBigInteger('professor_id');
             $table->unsignedInteger('max_capacity');
+            $table->date('start_date');
+            $table->date('expiration_date');
             $table->timestamps();
 
             $table->foreign('professor_id')->references('id')->on('users')->onDelete('cascade');

@@ -10,13 +10,15 @@ use Illuminate\Support\Str;
 
 class ClassroomController extends Controller
 {
-    //
+    // QR - FECHA DE INICIO Y EXPIRACION
     public function createClassroom(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|min:1|max:100',
             'description' => 'required|string|min:1|max:300',
             'max_capacity' => 'required|numeric',
+            'start_date' => 'required|date|after_or_equal:today',
+            'expiration_date' => 'required|date|after_or_equal:today|after_or_equal:start_date',
         ]);
 
         if ($validator->fails()) {
@@ -30,6 +32,8 @@ class ClassroomController extends Controller
             'max_capacity' => $request->max_capacity,
             'join_code' => $generatedJoinCode,
             'professor_id' => Auth::id(),
+            'start_date' => $request->start_date,
+            'expiration_date' => $request->expiration_date,
         ]);
 
         return response()->json(['message' => 'Classroom added sucessfully'], 201);

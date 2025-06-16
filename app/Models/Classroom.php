@@ -16,6 +16,8 @@ class Classroom extends Model
         'max_capacity',
         'join_code',
         'professor_id',
+        'start_date',
+        'expiration_date',
     ];
 
     public function users()
