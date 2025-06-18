@@ -4,7 +4,6 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CharacterController;
 use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\QuestionController;
-use App\Http\Middleware\IsAdmin;
 use App\Http\Middleware\IsProfessor;
 use App\Http\Middleware\IsUserAuth;
 use Illuminate\Container\Attributes\Auth;
@@ -24,7 +23,7 @@ Route::middleware([IsUserAuth::class])->group(function () {
         Route::post('logout', 'logout');
     });
 
-    Route::middleware([IsAdmin::class])->group(function () {
+    Route::middleware([IsProfessor::class])->group(function () {
         Route::controller(ClassroomController::class)->group(function () {
             Route::post('classroom', 'createClassroom');
             Route::get('/classroom/{id}', 'getClassroomById');
@@ -51,9 +50,9 @@ Route::middleware([IsUserAuth::class])->group(function () {
         });
     });
 
-    Route::middleware([IsAdmin::class])->group(function () {
+    Route::middleware([IsProfessor::class])->group(function () {
         Route::get('admin-only', function () {
-            return response()->json(['message' => 'Solo admin puede ver esto']);
+            return response()->json(['message' => 'Solo professor puede ver esto']);
         });
     });
 });
