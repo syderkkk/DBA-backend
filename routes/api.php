@@ -9,6 +9,7 @@ use App\Http\Middleware\IsUserAuth;
 use Illuminate\Container\Attributes\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use PhpParser\Builder\Class_;
 
 // RUTAS PUBLICAS
 Route::post('register', [AuthController::class, 'register']);
@@ -21,18 +22,30 @@ Route::middleware([IsUserAuth::class])->group(function () {
     Route::controller(AuthController::class)->group(function () {
         Route::get('user', 'getUser');
         Route::post('logout', 'logout');
+
+        // Student
+        Route::controller(ClassroomController::class)->group(function () {
+            Route::post('classroom/join', 'joinClassroomByCode');
+            Route::get('my-classrooms', 'getMyClassrooms');
+            Route::get('/classroom/{id}', 'getClassroomById');
+        });
     });
 
     Route::middleware([IsProfessor::class])->group(function () {
         Route::controller(ClassroomController::class)->group(function () {
             Route::post('classroom', 'createClassroom');
-            Route::get('/classroom/{id}', 'getClassroomById');
+            
             Route::patch('/classroom/{id}', 'updateClassroomById');
             Route::delete('/classroom/{id}', 'deleteClassroomById');
 
             Route::post('classroom/{id}/add-user', 'addUserToClassroom');
             Route::post('classroom/{id}/remove-user', 'removeUserFromClassroom');
             Route::get('classroom/{id}/users', 'getUsersInClassroom');
+
+            //
+            Route::get('classroom', 'getClassroomsByProfessor');
+
+            //
         });
 
         Route::controller(CharacterController::class)->group(function () {

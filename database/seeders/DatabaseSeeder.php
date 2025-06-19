@@ -25,7 +25,7 @@ class DatabaseSeeder extends Seeder
 
         User::factory()->create([
             'name' => 'Maricela',
-            'role' => 'professor',
+            'role' => 'student',
             'email' => 'maricela@gmail.com',
             'password' => bcrypt('a322'),
         ]);
@@ -36,6 +36,8 @@ class DatabaseSeeder extends Seeder
             'max_capacity' => 3,
             'join_code' => 'ABCDE',
             'professor_id' => 1,
+            'start_date' => now(),
+            'expiration_date' => now()->addMonth(),
         ]);
     }
 }
