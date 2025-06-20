@@ -18,8 +18,8 @@ return new class extends Migration
             $table->string('question');
             $table->string('option_1');
             $table->string('option_2');
-            $table->string('option_3');
-            $table->string('option_4');
+            $table->string('option_3')->nullable();
+            $table->string('option_4')->nullable();
             $table->string('correct_option');
             $table->boolean('is_active')->default(true);
             $table->timestamps();

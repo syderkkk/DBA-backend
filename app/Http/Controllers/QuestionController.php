@@ -19,8 +19,8 @@ class QuestionController extends Controller
             'question' => 'required|string|max:255',
             'option_1' => 'required|string|max:255',
             'option_2' => 'required|string|max:255',
-            'option_3' => 'required|string|max:255',
-            'option_4' => 'required|string|max:255',
+            'option_3' => 'nullable|string|max:255',
+            'option_4' => 'nullable|string|max:255',
             'correct_option' => 'required|string|in:option_1,option_2,option_3,option_4',
         ]);
 

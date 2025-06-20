@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Classroom;
 use App\Models\User;
+use Carbon\Carbon;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -36,8 +37,8 @@ class DatabaseSeeder extends Seeder
             'max_capacity' => 3,
             'join_code' => 'ABCDE',
             'professor_id' => 1,
-            'start_date' => now(),
-            'expiration_date' => now()->addMonth(),
+            'start_date' => Carbon::now()->format('Y-m-d H:i:s'),
+            'expiration_date' => Carbon::now()->addMonth()->format('Y-m-d H:i:s'),
         ]);
     }
 }

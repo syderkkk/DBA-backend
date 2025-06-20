@@ -17,8 +17,8 @@ class ClassroomController extends Controller
             'title' => 'required|string|min:1|max:100',
             'description' => 'required|string|min:1|max:300',
             'max_capacity' => 'required|numeric',
-            'start_date' => 'required|date|after_or_equal:today',
-            'expiration_date' => 'required|date|after_or_equal:today|after_or_equal:start_date',
+            'start_date' => 'required|date_format:Y-m-d H:i',
+            'expiration_date' => 'required|date_format:Y-m-d H:i|after_or_equal:start_date',
         ]);
 
         if ($validator->fails()) {
@@ -62,7 +62,7 @@ class ClassroomController extends Controller
     public function updateClassroomById(Request $request, $id)
     {
         $classroom = Classroom::find($id);
-        if ($classroom) {
+        if (!$classroom) {
             return response()->json(['message' => 'Classroom not found'], 404);
         }
         $validator = Validator::make($request->all(), [
@@ -78,11 +78,12 @@ class ClassroomController extends Controller
             $classroom->title = $request->title;
         }
         if ($request->has('description')) {
-            $classroom->title = $request->description;
+            $classroom->description = $request->description;
         }
         if ($request->has('max_capacity')) {
-            $classroom->title = $request->max_capacity;
+            $classroom->max_capacity = $request->max_capacity;
         }
+
         $classroom->update();
         return response()->json(['message' => 'Classroom updated sucessfully'], 200);
     }
