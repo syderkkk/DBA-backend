@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CharacterController;
 use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\QuestionController;
+use App\Http\Controllers\ShopController;
 use App\Http\Middleware\IsProfessor;
 use App\Http\Middleware\IsUserAuth;
 use Illuminate\Container\Attributes\Auth;
@@ -18,6 +19,12 @@ Route::post('login', [AuthController::class, 'login']);
 
 // RUTAS PRIVADAS
 Route::middleware([IsUserAuth::class])->group(function () {
+
+    Route::controller(ShopController::class)->group(function () {
+        Route::get('shop/characters', 'getShopCharacters');
+        Route::get('user/gold', 'getUserGold');
+        Route::post('classroom/{id}/shop/purchase', 'purchaseCharacter');
+    });
 
     Route::controller(AuthController::class)->group(function () {
         Route::get('user', 'getUser');

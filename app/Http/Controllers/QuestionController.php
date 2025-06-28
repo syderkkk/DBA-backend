@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Validator;
 
 class QuestionController extends Controller
 {
-
     //Crear pregunta
     public function createQuestion(Request $request, $classroomId)
     {
