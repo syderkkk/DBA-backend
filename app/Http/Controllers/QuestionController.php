@@ -10,6 +10,7 @@ use App\Models\UserClassroomStats;
 use App\Services\ExperienceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class QuestionController extends Controller
@@ -125,8 +126,13 @@ class QuestionController extends Controller
 
         if ($isCorrect) {
             // USAR EL SERVICIO EN LUGAR DEL MÉTODO DEL MODELO
-            $user = Auth::user();
+            $userId = Auth::user();
+            $user = User::find($userId->id);
+
             $result = ExperienceService::addExperience($user, 20);
+
+            $user->gold = $user->gold + 10;
+            $user->save();
 
             return response()->json([
                 'message' => '¡Respuesta correcta! +20 EXP, +10 ORO',
@@ -180,8 +186,6 @@ class QuestionController extends Controller
         ], 200);
     }
 
-
-
     // Endpoint para cerrar/desactivar pregunta
     public function closeQuestion($questionId)
     {
@@ -196,7 +200,9 @@ class QuestionController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $question->update(['is_active' => false]);
+        DB::table('questions')
+            ->where('id', $questionId)
+            ->update(['is_active' => false]);
 
         return response()->json(['message' => 'Question closed successfully'], 200);
     }
