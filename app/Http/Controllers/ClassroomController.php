@@ -162,8 +162,39 @@ class ClassroomController extends Controller
             return response()->json(['message' => 'Classroom not found'], 404);
         }
 
-        $users = $classroom->users;
-        return response()->json($users, 200); // 200: OK
+        // Obtener usuarios con sus estadísticas del classroom
+        $users = $classroom->users()->with(['classroomStats' => function ($query) use ($id) {
+            $query->where('classroom_id', $id);
+        }])->get();
+
+        $usersWithStats = $users->map(function ($user) use ($id) {
+            $stats = $user->classroomStats->first(); // Obtener stats de este classroom
+
+            $skinCode = $user->character ? $user->character->skin_code : 'default_warrior';
+
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'character_name' => $user->character ? $user->character->name : $user->name,
+                'character_type' => $user->character ? $user->character->type : 'Guerrero',
+                'current_skin' => $skinCode,  // ✅ CORRECTO: desde character
+                'created_at' => $user->created_at,
+                'updated_at' => $user->updated_at,
+                // Estadísticas del classroom específico
+                'hp' => $stats ? $stats->hp : 100,
+                'max_hp' => $stats ? $stats->max_hp : 100,
+                'mp' => $stats ? $stats->mp : 100,
+                'max_mp' => $stats ? $stats->max_mp : 100,
+                // Datos globales del usuario
+                'experience' => $user->experience,
+                'level' => $user->level,
+                'gold' => $user->gold,
+            ];
+        });
+
+        return response()->json($usersWithStats, 200);
     }
 
 

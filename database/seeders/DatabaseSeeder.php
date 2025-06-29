@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\CharacterSkin;
 use App\Models\Classroom;
 use App\Models\User;
 use Carbon\Carbon;
@@ -48,5 +49,11 @@ class DatabaseSeeder extends Seeder
             'start_date' => Carbon::now()->format('Y-m-d H:i:s'),
             'expiration_date' => Carbon::now()->addMonth()->format('Y-m-d H:i:s'),
         ]);
+
+        $this->call([
+            CharacterSkinSeeder::class,
+        ]);
     }
+
+    
 }

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('skin_code', 20)->unique();
             $table->string('name');
             $table->enum('character_type', ['Guerrero', 'Mago', 'Sanador']);
-            $table->string('image_url');
+            $table->string('image_url')->nullable();
             $table->text('description')->nullable();
             $table->integer('price')->default(0);
             $table->boolean('is_available')->default(true);

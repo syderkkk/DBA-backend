@@ -19,8 +19,8 @@ Route::post('login', [AuthController::class, 'login']);
 // RUTAS PRIVADAS
 Route::middleware([IsUserAuth::class])->group(function () {
 
+
     Route::controller(ShopCharacterController::class)->group(function () {
-        // QUITAR getShopCharacters - Solo skins
         Route::get('shop/skins', 'getShopSkins');
         Route::post('shop/purchase-skin', 'purchaseSkin');
         Route::get('shop/my-skins', 'getUserSkins');
@@ -37,6 +37,8 @@ Route::middleware([IsUserAuth::class])->group(function () {
             Route::post('classroom/join', 'joinClassroomByCode');
             Route::get('my-classrooms', 'getMyClassrooms');
             Route::get('/classroom/{id}', 'getClassroomById');
+
+            Route::get('classroom/{id}/users', 'getUsersInClassroom');
         });
 
 
@@ -56,7 +58,7 @@ Route::middleware([IsUserAuth::class])->group(function () {
 
             Route::post('classroom/{id}/add-user', 'addUserToClassroom');
             Route::post('classroom/{id}/remove-user', 'removeUserFromClassroom');
-            Route::get('classroom/{id}/users', 'getUsersInClassroom');
+            
 
             //
             Route::get('classroom', 'getClassroomsByProfessor');
