@@ -24,6 +24,9 @@ class User extends Authenticatable implements JWTSubject
         'email',
         'password',
         'gold',
+        'level',
+        'experience',
+        'experience_to_next_level',
     ];
 
     /**
@@ -69,4 +72,25 @@ class User extends Authenticatable implements JWTSubject
         return [];
     }
 
+    public function character()
+    {
+        return $this->hasOne(Character::class);
+    }
+
+    public function classrooms()
+    {
+        return $this->belongsToMany(Classroom::class, 'classroom_user', 'user_id', 'classroom_id')
+            ->withPivot('user_name', 'user_email')
+            ->withTimestamps();
+    }
+
+    public function classroomStats()
+    {
+        return $this->hasMany(UserClassroomStats::class);
+    }
+
+    public function userSkins()
+    {
+        return $this->hasMany(UserSkin::class);
+    }
 }

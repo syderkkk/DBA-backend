@@ -11,20 +11,31 @@ class Character extends Model
 
     protected $fillable = [
         'user_id',
-        'classroom_id',
         'name',
+        'skin_code',
         'type',
-        'hp',
-        'mp',
-        'level',
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
     }
-    public function classroom()
+
+    public function skin()
     {
-        return $this->belongsTo(Classroom::class);
+        return $this->belongsTo(CharacterSkin::class, 'skin_code', 'skin_code');
+    }
+
+    public function getDisplayStats()
+    {
+        $user = $this->user;
+        return [
+            'name' => $this->name,
+            'type' => $this->type,
+            'skin_code' => $this->skin_code,
+            'user_level' => $user->level,
+            'user_experience' => $user->experience,
+            'user_gold' => $user->gold,
+        ];
     }
 }

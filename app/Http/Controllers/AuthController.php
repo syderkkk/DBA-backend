@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Character;
+use App\Models\CharacterSkin;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Exceptions\JWTException;
@@ -27,14 +30,36 @@ class AuthController extends Controller
             return response()->json(['error' => $validator->errors()], 422);
         };
 
-        User::create([
-            'name' => $request->get('name'),
-            'role' => $request->get('role'),
-            'email' => $request->get('email'),
-            'password' => bcrypt($request->get('password')),
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'role' => $request->role,
+            'gold' => 100,
+            'level' => 1,
+            'experience' => 0,
+            'experience_to_next_level' => 100,
         ]);
 
-        return response()->json(['message' => 'User registered successfully'], 201);
+        // CREAR PERSONAJE POR DEFECTO AUTOMÁTICAMENTE
+        $defaultSkin = CharacterSkin::where('is_default', true)->first();
+        $skinCode = $defaultSkin ? $defaultSkin->skin_code : 'default_warrior';
+
+        Character::create([
+            'user_id' => $user->id,
+            'name' => $user->name, // Usar el nombre del usuario por defecto
+            'type' => 'Guerrero',  // Tipo por defecto
+            'skin_code' => $skinCode,
+        ]);
+
+        $token = JWTAuth::fromUser($user);
+
+        return response()->json([
+            'message' => 'Usuario creado exitosamente',
+            'user' => $user,
+            'access_token' => $token,
+            'token_type' => 'bearer',
+        ], 201);
     }
 
     public function login(Request $request)

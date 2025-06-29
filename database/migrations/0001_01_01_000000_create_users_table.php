@@ -20,6 +20,11 @@ return new class extends Migration
             $table->string('password');
             $table->integer('gold')->default(100);
             $table->rememberToken();
+
+            $table->integer('level')->default(1);
+            $table->integer('experience')->default(0);
+            $table->integer('experience_to_next_level')->default(100);
+
             $table->timestamps();
         });
 

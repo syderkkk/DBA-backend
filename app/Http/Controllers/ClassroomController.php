@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Classroom;
+use App\Models\UserClassroomStats;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -122,6 +123,17 @@ class ClassroomController extends Controller
             'user_email' => $user->email,
         ]);
 
+        // Crear stats iniciales para este classroom
+        UserClassroomStats::firstOrCreate([
+            'user_id' => $user->id,
+            'classroom_id' => $id,
+        ], [
+            'hp' => 100,
+            'max_hp' => 100,
+            'mp' => 100,
+            'max_mp' => 100,
+        ]);
+
         return response()->json(['message' => 'Usuario inscrito correctamente'], 201);
     }
 
@@ -192,6 +204,17 @@ class ClassroomController extends Controller
         $classroom->users()->attach(Auth::id(), [
             'user_name' => Auth::user()->name,
             'user_email' => Auth::user()->email,
+        ]);
+
+        // Crear stats iniciales para este classroom
+        UserClassroomStats::firstOrCreate([
+            'user_id' => Auth::id(),
+            'classroom_id' => $classroom->id,
+        ], [
+            'hp' => 100,
+            'max_hp' => 100,
+            'mp' => 100,
+            'max_mp' => 100,
         ]);
 
         return response()->json(['message' => 'Successfully joined the classroom'], 201);

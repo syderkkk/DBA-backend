@@ -22,6 +22,10 @@ class DatabaseSeeder extends Seeder
             'role' => 'professor',
             'email' => 'italo@gmail.com',
             'password' => bcrypt('a322'),
+            'gold' => 100,
+            'level' => 1,
+            'experience' => 0,
+            'experience_to_next_level' => 100,
         ]);
 
         User::factory()->create([
@@ -29,6 +33,10 @@ class DatabaseSeeder extends Seeder
             'role' => 'student',
             'email' => 'maricela@gmail.com',
             'password' => bcrypt('a322'),
+            'gold' => 100,
+            'level' => 1,
+            'experience' => 0,
+            'experience_to_next_level' => 100,
         ]);
 
         Classroom::factory()->create([

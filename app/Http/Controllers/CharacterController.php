@@ -9,62 +9,42 @@ use Illuminate\Support\Facades\Validator;
 
 class CharacterController extends Controller
 {
-    public function createCharacter(Request $request, $classroomId)
+    // Obtener mi personaje
+    public function getMyCharacter()
     {
-        $userId = Auth::id();
-        // Verifica si el usuario ya tiene un personaje en este classroom
-        $existingCharacter = Character::where('user_id', $userId)
-            ->where('classroom_id', $classroomId)
-            ->first();
+        $character = Character::with('skin')->where('user_id', Auth::id())->first();
 
-        if ($existingCharacter) {
-            return response()->json(['error' => 'Este usuario ya tiene un Character en esta Classroom'], 409);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:30',
-            'type' => 'required|string|max:10|in:Guerrero,Mago,Sanador',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 422);
-        };
-        
-        Character::create([
-            'user_id' => Auth::id(),
-            'classroom_id' => $classroomId,
-            'name' => $request->name,
-            'type' => $request->type,
-            'hp' => 100,
-            'mp' => 100,
-            'level' => 1,
-        ]);
-        return response()->json(['message' => 'Character created successfully'], 201);
-    }
-
-    public function getMyCharacter($classroomId)
-    {
-        $userId = Auth::id();
-        $character = Character::where('user_id', $userId)
-            ->where('classroom_id', $classroomId)
-            ->first();
         if (!$character) {
             return response()->json(['error' => 'Character not found'], 404);
         }
-        return response()->json($character, 200);
+
+        // Incluir datos del usuario (nivel, experiencia, oro)
+        $user = Auth::user();
+        $characterData = $character->toArray();
+        $characterData['user_level'] = $user->level;
+        $characterData['user_experience'] = $user->experience;
+        $characterData['user_gold'] = $user->gold;
+        $characterData['experience_percentage'] = $this->getExperiencePercentage($user);
+
+        return response()->json($characterData, 200);
     }
 
-    public function getCharactersByClassroom($id)
+    // Obtener personajes de usuarios en un classroom
+    public function getCharactersByClassroom($classroomId)
     {
-        $characters = Character::where('classroom_id', $id)->get();
+        $characters = Character::with(['user', 'skin'])
+            ->whereHas('user.classrooms', function ($query) use ($classroomId) {
+                $query->where('classroom_id', $classroomId);
+            })
+            ->get();
+
         return response()->json($characters, 200);
     }
 
-    public function updateCharacterByClassroomAndId(Request $request, $classroomId, $characterId)
+    // Actualizar personaje
+    public function updateCharacter(Request $request)
     {
-        $character = Character::where('id', $characterId)
-            ->where('classroom_id', $classroomId)
-            ->first();
+        $character = Character::where('user_id', Auth::id())->first();
 
         if (!$character) {
             return response()->json(['message' => 'Character not found'], 404);
@@ -72,33 +52,21 @@ class CharacterController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|string|max:30',
-            'type' => 'sometimes|string|in:Guerrero,Mago,Sanador',
-            'hp' => 'sometimes|integer|min:0',
-            'mp' => 'sometimes|integer|min:0',
-            'level' => 'sometimes|integer|min:1',
+            'skin_code' => 'sometimes|string|exists:character_skins,skin_code',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()], 422);
         }
 
-        $character->update($request->only(['name', 'type', 'hp', 'mp', 'level']));
+        $character->update($request->only(['name', 'skin_code']));
 
         return response()->json(['message' => 'Character updated successfully'], 200);
     }
 
-    public function deleteCharacterByClassroomAndId($classroomId, $characterId)
+    private function getExperiencePercentage($user)
     {
-        $character = Character::where('id', $characterId)
-            ->where('classroom_id', $classroomId)
-            ->first();
-
-        if (!$character) {
-            return response()->json(['message' => 'Character not found'], 404);
-        }
-
-        $character->delete();
-
-        return response()->json(['message' => 'Character deleted successfully'], 200);
+        if ($user->experience_to_next_level <= 0) return 100;
+        return round(($user->experience / $user->experience_to_next_level) * 100, 2);
     }
 }

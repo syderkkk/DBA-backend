@@ -15,4 +15,15 @@ class QuestionAnswer extends Model
         'selected_option',
         'is_correct',
     ];
+
+    public function question()
+    {
+        return $this->belongsTo(Question::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
 }

@@ -17,7 +17,6 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         //
         IsUserAuth::class;
-        IsAdmin::class;
         IsProfessor::class;
     })
     ->withExceptions(function (Exceptions $exceptions) {

@@ -13,13 +13,10 @@ return new class extends Migration
     {
         Schema::create('characters', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('classroom_id')->constrained()->onDelete('cascade');
-            $table->string('name');
-            $table->enum('type', ['Guerrero', 'Mago', 'Sanador']);
-            $table->integer('hp')->default(100);
-            $table->integer('mp')->default(100);
-            $table->integer('level')->default(1);
+            $table->foreignId('user_id')->constrained()->onDelete('cascade')->unique();
+            $table->string('name', 30);
+            $table->string('type', 10)->nullable(); // Guerrero, Mago, Sanador
+            $table->string('skin_code', 20)->default('default_warrior');
             $table->timestamps();
         });
     }

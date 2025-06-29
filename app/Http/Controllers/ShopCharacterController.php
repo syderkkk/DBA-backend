@@ -2,87 +2,135 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Character;
-use App\Models\ShopCharacter;
+use App\Models\CharacterSkin;
 use App\Models\User;
+use App\Models\UserSkin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
-class ShopController extends Controller
+class ShopCharacterController extends Controller
 {
-    // Obtener todos los personajes disponibles en la tienda
-    public function getShopCharacters()
+    // Obtener todas las skins disponibles en la tienda
+    public function getShopSkins()
     {
-        $characters = ShopCharacter::where('is_available', true)->get();
-        return response()->json($characters, 200);
+        $skins = CharacterSkin::where('price', '>', 0)->get();
+        return response()->json($skins, 200);
     }
 
-    // Comprar un personaje para un classroom específico
-    public function purchaseCharacter(Request $request, $classroomId)
+    // Comprar una skin (NO un personaje completo)
+    public function purchaseSkin(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'shop_character_id' => 'required|exists:shop_characters,id',
-            'character_name' => 'required|string|max:30',
+            'skin_code' => 'required|exists:character_skins,skin_code',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()], 422);
         }
 
-        $user = Auth::user();
-        $shopCharacter = ShopCharacter::find($request->shop_character_id);
+        $userId = Auth::id();
+        $user = User::find($userId); // USAR FIND EN LUGAR DE Auth::user()
+        $skin = CharacterSkin::where('skin_code', $request->skin_code)->first();
 
-        if (!$shopCharacter->is_available) {
-            return response()->json(['message' => 'Character not available'], 400);
-        }
-
-        // Verificar si el usuario tiene suficiente oro
-        if ($user->gold < $shopCharacter->price) {
+        if ($user->gold < $skin->price) {
             return response()->json(['message' => 'Insufficient gold'], 400);
         }
 
-        // Verificar si el usuario ya tiene un personaje en este classroom
-        $existingCharacter = Character::where('user_id', $user->id)
-            ->where('classroom_id', $classroomId)
-            ->first();
+        // Verificar si ya tiene la skin
+        $existingSkin = UserSkin::where('user_id', $userId)
+            ->where('skin_code', $request->skin_code)
+            ->exists();
 
-        if ($existingCharacter) {
-            return response()->json(['message' => 'You already have a character in this classroom'], 409);
+        if ($existingSkin) {
+            return response()->json(['message' => 'You already own this skin'], 409);
         }
 
-        DB::transaction(function () use ($user, $shopCharacter, $classroomId, $request) {
-            // Descontar oro del usuario usando DB directamente
-            DB::table('users')
-                ->where('id', $user->id)
-                ->decrement('gold', $shopCharacter->price);
+        DB::transaction(function () use ($user, $skin, $userId) {
+            // Descontar oro
+            $user->gold = $user->gold - $skin->price;
+            $user->save();
 
-            // Crear el personaje en el classroom
-            Character::create([
-                'user_id' => $user->id,
-                'classroom_id' => $classroomId,
-                'name' => $request->character_name,
-                'type' => $shopCharacter->type,
-                'hp' => $shopCharacter->base_hp,
-                'mp' => $shopCharacter->base_mp,
-                'level' => 1,
+            // Agregar skin al usuario (SIN USAR RELACIÓN)
+            UserSkin::create([
+                'user_id' => $userId,
+                'skin_code' => $skin->skin_code
             ]);
         });
 
-        // Obtener el oro actualizado
-        $updatedUser = User::find($user->id);
+        // Recargar usuario para obtener oro actualizado
+        $updatedUser = User::find($userId);
 
         return response()->json([
-            'message' => 'Character purchased successfully',
+            'message' => 'Skin purchased successfully',
             'remaining_gold' => $updatedUser->gold
         ], 201);
     }
 
-    // Obtener el oro actual del usuario
     public function getUserGold()
     {
-        $user = Auth::user();
+        $userId = Auth::id();
+        $user = User::find($userId);
         return response()->json(['gold' => $user->gold], 200);
+    }
+
+    // Obtener skins que posee el usuario
+    public function getUserSkins()
+    {
+        $userId = Auth::id();
+
+        // Query manual sin usar relaciones del modelo
+        $userSkins = DB::table('user_skins')
+            ->join('character_skins', 'user_skins.skin_code', '=', 'character_skins.skin_code')
+            ->where('user_skins.user_id', $userId)
+            ->select('user_skins.*', 'character_skins.name', 'character_skins.description', 'character_skins.price')
+            ->get();
+
+        return response()->json($userSkins, 200);
+    }
+
+    public function getShopCharacters()
+    {
+        // Si quieres mostrar los personajes de la tabla shop_characters
+        $shopCharacters = DB::table('shop_characters')
+            ->where('is_available', true)
+            ->get();
+
+        return response()->json($shopCharacters, 200);
+    }
+
+    // MÉTODO ADICIONAL: Cambiar skin del personaje
+    public function changeSkin(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'skin_code' => 'required|exists:character_skins,skin_code',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], 422);
+        }
+
+        $userId = Auth::id();
+
+        // Verificar que el usuario posee esta skin
+        $ownsSkin = UserSkin::where('user_id', $userId)
+            ->where('skin_code', $request->skin_code)
+            ->exists();
+
+        if (!$ownsSkin) {
+            return response()->json(['message' => 'You do not own this skin'], 400);
+        }
+
+        // Actualizar skin del personaje (SIN USAR RELACIONES)
+        $updated = DB::table('characters')
+            ->where('user_id', $userId)
+            ->update(['skin_code' => $request->skin_code]);
+
+        if (!$updated) {
+            return response()->json(['message' => 'Character not found'], 404);
+        }
+
+        return response()->json(['message' => 'Skin changed successfully'], 200);
     }
 }
