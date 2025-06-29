@@ -231,4 +231,159 @@ class QuestionController extends Controller
             'has_answered' => $alreadyAnswered
         ], 200);
     }
+
+    public function rewardStudent(Request $request, $classroomId)
+    {
+        $validator = Validator::make($request->all(), [
+            'userId' => 'required|integer|exists:users,id',
+            'gold' => 'nullable|integer|min:1|max:100',
+            'experience' => 'nullable|integer|min:1|max:50',
+            'hp' => 'nullable|integer|min:1|max:50',
+            'mp' => 'nullable|integer|min:1|max:50',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], 422);
+        }
+
+        // Verificar que el classroom existe
+        $classroom = Classroom::find($classroomId);
+        if (!$classroom) {
+            return response()->json(['message' => 'Classroom not found'], 404);
+        }
+
+        // Verificar que el usuario autenticado es el profesor del classroom
+        if ($classroom->professor_id !== Auth::id()) {
+            return response()->json(['message' => 'Unauthorized. Only the professor can reward students'], 403);
+        }
+
+        // Verificar que el estudiante está en el classroom
+        $studentId = $request->userId;
+        if (!$classroom->users()->where('user_id', $studentId)->exists()) {
+            return response()->json(['message' => 'Student is not enrolled in this classroom'], 404);
+        }
+
+        $student = User::find($studentId);
+        if (!$student) {
+            return response()->json(['message' => 'Student not found'], 404);
+        }
+
+        // Obtener stats del estudiante en este classroom
+        $userStats = UserClassroomStats::where('user_id', $studentId)
+            ->where('classroom_id', $classroomId)
+            ->first();
+
+        if (!$userStats) {
+            return response()->json(['message' => 'Student stats not found for this classroom'], 404);
+        }
+
+        $rewards = [];
+
+        // Aplicar recompensas
+        if ($request->has('gold') && $request->gold > 0) {
+            $student->gold += $request->gold;
+            $rewards['gold_gained'] = $request->gold;
+        }
+
+        if ($request->has('experience') && $request->experience > 0) {
+            $result = ExperienceService::addExperience($student, $request->experience);
+            $rewards['experience_gained'] = $request->experience;
+            $rewards['leveled_up'] = $result['leveled_up'];
+            $rewards['new_level'] = $result['new_level'];
+        }
+
+        if ($request->has('hp') && $request->hp > 0) {
+            $healedHp = $userStats->heal($request->hp);
+            $rewards['hp_healed'] = $request->hp;
+            $rewards['current_hp'] = $healedHp;
+        }
+
+        if ($request->has('mp') && $request->mp > 0) {
+            $restoredMp = $userStats->restoreMana($request->mp);
+            $rewards['mp_restored'] = $request->mp;
+            $rewards['current_mp'] = $restoredMp;
+        }
+
+        $student->save();
+
+        return response()->json([
+            'message' => 'Student rewarded successfully',
+            'student_name' => $student->name,
+            'rewards' => $rewards,
+            'current_gold' => $student->gold,
+            'current_level' => $student->level,
+            'current_experience' => $student->experience,
+            'max_hp' => $userStats->max_hp,
+            'max_mp' => $userStats->max_mp,
+        ], 200);
+    }
+
+    // Función para penalizar a un estudiante
+    public function penalizeStudent(Request $request, $classroomId)
+    {
+        $validator = Validator::make($request->all(), [
+            'userId' => 'required|integer|exists:users,id',
+            'hp' => 'nullable|integer|min:1|max:50',
+            'mp' => 'nullable|integer|min:1|max:50',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], 422);
+        }
+
+        // Verificar que el classroom existe
+        $classroom = Classroom::find($classroomId);
+        if (!$classroom) {
+            return response()->json(['message' => 'Classroom not found'], 404);
+        }
+
+        // Verificar que el usuario autenticado es el profesor del classroom
+        if ($classroom->professor_id !== Auth::id()) {
+            return response()->json(['message' => 'Unauthorized. Only the professor can penalize students'], 403);
+        }
+
+        // Verificar que el estudiante está en el classroom
+        $studentId = $request->userId;
+        if (!$classroom->users()->where('user_id', $studentId)->exists()) {
+            return response()->json(['message' => 'Student is not enrolled in this classroom'], 404);
+        }
+
+        $student = User::find($studentId);
+        if (!$student) {
+            return response()->json(['message' => 'Student not found'], 404);
+        }
+
+        // Obtener stats del estudiante en este classroom
+        $userStats = UserClassroomStats::where('user_id', $studentId)
+            ->where('classroom_id', $classroomId)
+            ->first();
+
+        if (!$userStats) {
+            return response()->json(['message' => 'Student stats not found for this classroom'], 404);
+        }
+
+        $penalties = [];
+
+        // Aplicar penalizaciones (SIN quitar maná como mencionaste)
+        if ($request->has('hp') && $request->hp > 0) {
+            $remainingHp = $userStats->takeDamage($request->hp);
+            $penalties['hp_lost'] = $request->hp;
+            $penalties['current_hp'] = $remainingHp;
+            $penalties['is_dead'] = $userStats->isDead();
+        }
+
+        if ($request->has('mp') && $request->mp > 0) {
+            $remainingMp = $userStats->useMana($request->mp);
+            $penalties['mp_lost'] = $request->mp;
+            $penalties['current_mp'] = $remainingMp;
+        }
+
+        return response()->json([
+            'message' => 'Student penalized successfully',
+            'student_name' => $student->name,
+            'penalties' => $penalties,
+            'max_hp' => $userStats->max_hp,
+            'max_mp' => $userStats->max_mp,
+        ], 200);
+    }
 }

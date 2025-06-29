@@ -58,7 +58,7 @@ Route::middleware([IsUserAuth::class])->group(function () {
 
             Route::post('classroom/{id}/add-user', 'addUserToClassroom');
             Route::post('classroom/{id}/remove-user', 'removeUserFromClassroom');
-            
+
 
             //
             Route::get('classroom', 'getClassroomsByProfessor');
@@ -77,6 +77,9 @@ Route::middleware([IsUserAuth::class])->group(function () {
 
             Route::patch('question/{id}/close', 'closeQuestion'); // Cerrar pregunta
             Route::get('classroom/{id}/all-questions', 'getAllQuestionsByClassroom');  // Todas las preguntas
+
+            Route::post('classroom/{id}/reward-student', 'rewardStudent');
+            Route::post('classroom/{id}/penalize-student', 'penalizeStudent');
         });
     });
 

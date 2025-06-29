@@ -42,7 +42,7 @@ class ClassroomController extends Controller
 
     public function getClassroom()
     {
-        $classroom = Classroom::all();
+        $classroom = Classroom::withCount('users as students_count')->get();
 
         if ($classroom->isEmpty()) {
             return response(['message' => 'No classroom found'], 404);
@@ -145,12 +145,31 @@ class ClassroomController extends Controller
             return response()->json(['message' => 'Classroom not found'], 404);
         }
 
-        $user = Auth::user();
-        if (!$user) {
+        // Validar que se envió el userId
+        $request->validate([
+            'userId' => 'required|integer|exists:users,id'
+        ]);
+
+        $userToRemove = $request->input('userId');
+
+        // Verificar que el usuario autenticado es el profesor del aula
+        $authenticatedUser = Auth::user();
+        if (!$authenticatedUser) {
             return response()->json(['message' => 'User not found'], 404);
         }
 
-        $classroom->users()->detach($user->id);
+        if ($classroom->professor_id !== $authenticatedUser->id) {
+            return response()->json(['message' => 'No tienes permisos para expulsar usuarios de esta clase'], 403);
+        }
+
+        // Verificar que el usuario a remover está en el aula
+        if (!$classroom->users()->where('user_id', $userToRemove)->exists()) {
+            return response()->json(['message' => 'El usuario no está en esta clase'], 404);
+        }
+
+        // Remover al usuario especificado
+        $classroom->users()->detach($userToRemove);
+
         return response()->json(['message' => 'Usuario removido correctamente'], 200);
     }
 
@@ -201,7 +220,9 @@ class ClassroomController extends Controller
     public function getClassroomsByProfessor()
     {
         $professorId = Auth::id();
-        $classrooms = Classroom::where('professor_id', $professorId)->get();
+        $classrooms = Classroom::where('professor_id', $professorId)
+            ->withCount('users as students_count')
+            ->get();
 
         if ($classrooms->isEmpty()) {
             return response()->json(['message' => 'No classrooms found for this professor'], 404);
@@ -256,7 +277,7 @@ class ClassroomController extends Controller
         $userId = Auth::id();
         $classrooms = Classroom::whereHas('users', function ($query) use ($userId) {
             $query->where('user_id', $userId);
-        })->get();
+        })->withCount('users as students_count')->get();
 
         if ($classrooms->isEmpty()) {
             return response()->json(['message' => 'No classrooms found for this user'], 404);
