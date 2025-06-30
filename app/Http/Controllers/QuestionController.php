@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\QuestionClosed;
+use App\Events\QuestionCreated;
 use App\Models\Classroom;
 use App\Models\Question;
 use App\Models\QuestionAnswer;
@@ -50,6 +52,8 @@ class QuestionController extends Controller
             'correct_option' => $request->correct_option,
             'is_active' => true,
         ]);
+
+        event(new QuestionCreated($question, $classroomId));
 
         return response()->json([
             'message' => 'Question created successfully',
@@ -203,6 +207,9 @@ class QuestionController extends Controller
         DB::table('questions')
             ->where('id', $questionId)
             ->update(['is_active' => false]);
+
+        $classroomId = $question->classroom_id;
+        event(new QuestionClosed($questionId, $classroomId));
 
         return response()->json(['message' => 'Question closed successfully'], 200);
     }

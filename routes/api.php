@@ -9,6 +9,7 @@ use App\Http\Middleware\IsProfessor;
 use App\Http\Middleware\IsUserAuth;
 use Illuminate\Container\Attributes\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 
 // RUTAS PUBLICAS
@@ -91,3 +92,5 @@ Route::middleware([IsUserAuth::class])->group(function () {
         });
     });
 });
+
+Broadcast::routes();

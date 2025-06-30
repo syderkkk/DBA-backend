@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\UserJoinedClass;
 use App\Models\Classroom;
 use App\Models\UserClassroomStats;
 use Illuminate\Http\Request;
@@ -133,6 +134,8 @@ class ClassroomController extends Controller
             'mp' => 100,
             'max_mp' => 100,
         ]);
+
+        event(new UserJoinedClass($user, (string)$classroom->id));
 
         return response()->json(['message' => 'Usuario inscrito correctamente'], 201);
     }
@@ -268,6 +271,9 @@ class ClassroomController extends Controller
             'mp' => 100,
             'max_mp' => 100,
         ]);
+
+        $user = Auth::user();
+        event(new UserJoinedClass($user, (string)$classroom->id));
 
         return response()->json(['message' => 'Successfully joined the classroom'], 201);
     }
