@@ -122,15 +122,53 @@ class ShopCharacterController extends Controller
             return response()->json(['message' => 'You do not own this skin'], 400);
         }
 
-        // Actualizar skin del personaje (SIN USAR RELACIONES)
-        $updated = DB::table('characters')
-            ->where('user_id', $userId)
-            ->update(['skin_code' => $request->skin_code]);
+        // Usar transacción para actualizar ambas tablas
+        DB::transaction(function () use ($userId, $request) {
+            // 1. Actualizar skin del personaje en la tabla characters
+            $updated = DB::table('characters')
+                ->where('user_id', $userId)
+                ->update(['skin_code' => $request->skin_code]);
 
-        if (!$updated) {
-            return response()->json(['message' => 'Character not found'], 404);
-        }
+            if (!$updated) {
+                throw new \Exception('Character not found');
+            }
+
+            // 2. Desactivar is_equipped en todas las skins del usuario
+            DB::table('user_skins')
+                ->where('user_id', $userId)
+                ->update(['is_equipped' => false]);
+
+            // 3. Activar is_equipped solo en la skin seleccionada
+            DB::table('user_skins')
+                ->where('user_id', $userId)
+                ->where('skin_code', $request->skin_code)
+                ->update(['is_equipped' => true]);
+        });
 
         return response()->json(['message' => 'Skin changed successfully'], 200);
+    }
+
+    // Obtener skin equipada actual
+    public function getCurrentSkin()
+    {
+        $userId = Auth::id();
+
+        $currentSkin = DB::table('user_skins')
+            ->join('character_skins', 'user_skins.skin_code', '=', 'character_skins.skin_code')
+            ->where('user_skins.user_id', $userId)
+            ->where('user_skins.is_equipped', true)
+            ->select(
+                'user_skins.*',
+                'character_skins.name',
+                'character_skins.description',
+                'character_skins.price'
+            )
+            ->first();
+
+        if (!$currentSkin) {
+            return response()->json(['message' => 'No skin equipped'], 404);
+        }
+
+        return response()->json($currentSkin, 200);
     }
 }

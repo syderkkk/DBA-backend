@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('skin_code', 20);
+            $table->boolean('is_equipped')->default(false);
             $table->timestamp('purchased_at')->useCurrent();
             $table->timestamps();
-            
             $table->unique(['user_id', 'skin_code']);
             $table->foreign('skin_code')->references('skin_code')->on('character_skins');
         });

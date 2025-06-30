@@ -26,6 +26,8 @@ Route::middleware([IsUserAuth::class])->group(function () {
         Route::get('shop/my-skins', 'getUserSkins');
         Route::post('character/change-skin', 'changeSkin');
         Route::get('user/gold', 'getUserGold');
+
+        Route::get('/character/current-skin', 'getCurrentSkin');
     });
 
     Route::controller(AuthController::class)->group(function () {
