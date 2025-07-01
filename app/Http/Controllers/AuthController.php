@@ -41,14 +41,13 @@ class AuthController extends Controller
             'experience_to_next_level' => 100,
         ]);
 
-        // CREAR PERSONAJE POR DEFECTO AUTOMÁTICAMENTE
         $defaultSkin = CharacterSkin::where('is_default', true)->first();
         $skinCode = $defaultSkin ? $defaultSkin->skin_code : 'default_warrior';
 
         Character::create([
             'user_id' => $user->id,
-            'name' => $user->name, // Usar el nombre del usuario por defecto
-            'type' => 'Guerrero',  // Tipo por defecto
+            'name' => $user->name,
+            'type' => 'Guerrero',
             'skin_code' => $skinCode,
         ]);
 

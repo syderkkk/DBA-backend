@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 
 class ClassroomController extends Controller
 {
-    // QR - FECHA DE INICIO Y EXPIRACION
+
     public function createClassroom(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -113,18 +113,15 @@ class ClassroomController extends Controller
             return response()->json(['message' => 'User not found'], 404);
         }
 
-        // Verifica si el usuario ya está inscrito
         if ($classroom->users()->where('user_id', $user->id)->exists()) {
             return response()->json(['message' => 'El usuario ya está inscrito en este classroom'], 409);
         }
 
-        // Adjunta el usuario al classroom con datos extra
         $classroom->users()->attach($user->id, [
             'user_name' => $user->name,
             'user_email' => $user->email,
         ]);
 
-        // Crear stats iniciales para este classroom
         UserClassroomStats::firstOrCreate([
             'user_id' => $user->id,
             'classroom_id' => $id,
@@ -148,14 +145,12 @@ class ClassroomController extends Controller
             return response()->json(['message' => 'Classroom not found'], 404);
         }
 
-        // Validar que se envió el userId
         $request->validate([
             'userId' => 'required|integer|exists:users,id'
         ]);
 
         $userToRemove = $request->input('userId');
 
-        // Verificar que el usuario autenticado es el profesor del aula
         $authenticatedUser = Auth::user();
         if (!$authenticatedUser) {
             return response()->json(['message' => 'User not found'], 404);
@@ -165,12 +160,10 @@ class ClassroomController extends Controller
             return response()->json(['message' => 'No tienes permisos para expulsar usuarios de esta clase'], 403);
         }
 
-        // Verificar que el usuario a remover está en el aula
         if (!$classroom->users()->where('user_id', $userToRemove)->exists()) {
             return response()->json(['message' => 'El usuario no está en esta clase'], 404);
         }
 
-        // Remover al usuario especificado
         $classroom->users()->detach($userToRemove);
 
         return response()->json(['message' => 'Usuario removido correctamente'], 200);
@@ -184,13 +177,12 @@ class ClassroomController extends Controller
             return response()->json(['message' => 'Classroom not found'], 404);
         }
 
-        // Obtener usuarios con sus estadísticas del classroom
         $users = $classroom->users()->with(['classroomStats' => function ($query) use ($id) {
             $query->where('classroom_id', $id);
         }])->get();
 
         $usersWithStats = $users->map(function ($user) use ($id) {
-            $stats = $user->classroomStats->first(); // Obtener stats de este classroom
+            $stats = $user->classroomStats->first();
 
             $skinCode = $user->character ? $user->character->skin_code : 'default_warrior';
 
@@ -201,15 +193,13 @@ class ClassroomController extends Controller
                 'role' => $user->role,
                 'character_name' => $user->character ? $user->character->name : $user->name,
                 'character_type' => $user->character ? $user->character->type : 'Guerrero',
-                'current_skin' => $skinCode,  // ✅ CORRECTO: desde character
+                'current_skin' => $skinCode,
                 'created_at' => $user->created_at,
                 'updated_at' => $user->updated_at,
-                // Estadísticas del classroom específico
                 'hp' => $stats ? $stats->hp : 100,
                 'max_hp' => $stats ? $stats->max_hp : 100,
                 'mp' => $stats ? $stats->mp : 100,
                 'max_mp' => $stats ? $stats->max_mp : 100,
-                // Datos globales del usuario
                 'experience' => $user->experience,
                 'level' => $user->level,
                 'gold' => $user->gold,
@@ -250,18 +240,15 @@ class ClassroomController extends Controller
             return response()->json(['message' => 'Classroom not found'], 404);
         }
 
-        // Verifica si el usuario ya está inscrito
         if ($classroom->users()->where('user_id', Auth::id())->exists()) {
             return response()->json(['message' => 'You are already enrolled in this classroom'], 409);
         }
 
-        // Adjunta el usuario al classroom con datos extra
         $classroom->users()->attach(Auth::id(), [
             'user_name' => Auth::user()->name,
             'user_email' => Auth::user()->email,
         ]);
 
-        // Crear stats iniciales para este classroom
         UserClassroomStats::firstOrCreate([
             'user_id' => Auth::id(),
             'classroom_id' => $classroom->id,

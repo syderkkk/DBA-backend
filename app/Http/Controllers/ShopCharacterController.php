@@ -12,14 +12,12 @@ use Illuminate\Support\Facades\Validator;
 
 class ShopCharacterController extends Controller
 {
-    // Obtener todas las skins disponibles en la tienda
     public function getShopSkins()
     {
         $skins = CharacterSkin::where('price', '>', 0)->get();
         return response()->json($skins, 200);
     }
 
-    // Comprar una skin (NO un personaje completo)
     public function purchaseSkin(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -31,14 +29,13 @@ class ShopCharacterController extends Controller
         }
 
         $userId = Auth::id();
-        $user = User::find($userId); // USAR FIND EN LUGAR DE Auth::user()
+        $user = User::find($userId);
         $skin = CharacterSkin::where('skin_code', $request->skin_code)->first();
 
         if ($user->gold < $skin->price) {
             return response()->json(['message' => 'Insufficient gold'], 400);
         }
 
-        // Verificar si ya tiene la skin
         $existingSkin = UserSkin::where('user_id', $userId)
             ->where('skin_code', $request->skin_code)
             ->exists();
@@ -48,18 +45,15 @@ class ShopCharacterController extends Controller
         }
 
         DB::transaction(function () use ($user, $skin, $userId) {
-            // Descontar oro
             $user->gold = $user->gold - $skin->price;
             $user->save();
 
-            // Agregar skin al usuario (SIN USAR RELACIÓN)
             UserSkin::create([
                 'user_id' => $userId,
                 'skin_code' => $skin->skin_code
             ]);
         });
 
-        // Recargar usuario para obtener oro actualizado
         $updatedUser = User::find($userId);
 
         return response()->json([
@@ -75,12 +69,10 @@ class ShopCharacterController extends Controller
         return response()->json(['gold' => $user->gold], 200);
     }
 
-    // Obtener skins que posee el usuario
     public function getUserSkins()
     {
         $userId = Auth::id();
 
-        // Query manual sin usar relaciones del modelo
         $userSkins = DB::table('user_skins')
             ->join('character_skins', 'user_skins.skin_code', '=', 'character_skins.skin_code')
             ->where('user_skins.user_id', $userId)
@@ -92,7 +84,6 @@ class ShopCharacterController extends Controller
 
     public function getShopCharacters()
     {
-        // Si quieres mostrar los personajes de la tabla shop_characters
         $shopCharacters = DB::table('shop_characters')
             ->where('is_available', true)
             ->get();
@@ -100,7 +91,6 @@ class ShopCharacterController extends Controller
         return response()->json($shopCharacters, 200);
     }
 
-    // MÉTODO ADICIONAL: Cambiar skin del personaje
     public function changeSkin(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -113,7 +103,6 @@ class ShopCharacterController extends Controller
 
         $userId = Auth::id();
 
-        // Verificar que el usuario posee esta skin
         $ownsSkin = UserSkin::where('user_id', $userId)
             ->where('skin_code', $request->skin_code)
             ->exists();
@@ -122,9 +111,7 @@ class ShopCharacterController extends Controller
             return response()->json(['message' => 'You do not own this skin'], 400);
         }
 
-        // Usar transacción para actualizar ambas tablas
         DB::transaction(function () use ($userId, $request) {
-            // 1. Actualizar skin del personaje en la tabla characters
             $updated = DB::table('characters')
                 ->where('user_id', $userId)
                 ->update(['skin_code' => $request->skin_code]);
@@ -133,12 +120,10 @@ class ShopCharacterController extends Controller
                 throw new \Exception('Character not found');
             }
 
-            // 2. Desactivar is_equipped en todas las skins del usuario
             DB::table('user_skins')
                 ->where('user_id', $userId)
                 ->update(['is_equipped' => false]);
 
-            // 3. Activar is_equipped solo en la skin seleccionada
             DB::table('user_skins')
                 ->where('user_id', $userId)
                 ->where('skin_code', $request->skin_code)
@@ -148,7 +133,6 @@ class ShopCharacterController extends Controller
         return response()->json(['message' => 'Skin changed successfully'], 200);
     }
 
-    // Obtener skin equipada actual
     public function getCurrentSkin()
     {
         $userId = Auth::id();

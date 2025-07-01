@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Validator;
 
 class CharacterController extends Controller
 {
-    // Obtener mi personaje
     public function getMyCharacter()
     {
         $character = Character::with('skin')->where('user_id', Auth::id())->first();
@@ -18,7 +17,6 @@ class CharacterController extends Controller
             return response()->json(['error' => 'Character not found'], 404);
         }
 
-        // Incluir datos del usuario (nivel, experiencia, oro)
         $user = Auth::user();
         $characterData = $character->toArray();
         $characterData['user_level'] = $user->level;
@@ -29,7 +27,6 @@ class CharacterController extends Controller
         return response()->json($characterData, 200);
     }
 
-    // Obtener personajes de usuarios en un classroom
     public function getCharactersByClassroom($classroomId)
     {
         $characters = Character::with(['user', 'skin'])
@@ -41,7 +38,6 @@ class CharacterController extends Controller
         return response()->json($characters, 200);
     }
 
-    // Actualizar personaje
     public function updateCharacter(Request $request)
     {
         $character = Character::where('user_id', Auth::id())->first();

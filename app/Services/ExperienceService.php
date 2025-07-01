@@ -12,14 +12,12 @@ class ExperienceService
         $oldLevel = $user->level;
         $user->experience += $exp;
 
-        // Verificar level up
         while ($user->experience >= $user->experience_to_next_level) {
             self::levelUp($user);
         }
 
         $user->save();
 
-        // Actualizar stats de classroom si subió de nivel
         if ($user->level > $oldLevel) {
             self::updateUserClassroomStats($user);
         }
@@ -40,7 +38,7 @@ class ExperienceService
         $user->experience -= $user->experience_to_next_level;
         $user->level++;
         $user->experience_to_next_level = 100 + (($user->level - 1) * 25);
-        $user->gold += $user->level * 10; // Oro extra por subir nivel
+        $user->gold += $user->level * 10;
     }
 
     public static function getExperiencePercentage(User $user): float
@@ -62,7 +60,6 @@ class ExperienceService
         $userStats = UserClassroomStats::where('user_id', $user->id)->get();
 
         foreach ($userStats as $stats) {
-            // Usar los mismos valores que getBaseStats()
             $baseStats = self::getBaseStats($user);
 
             $stats->max_hp = $baseStats['base_hp'];

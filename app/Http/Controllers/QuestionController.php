@@ -90,7 +90,6 @@ class QuestionController extends Controller
             return response()->json(['message' => 'Question not found'], 404);
         }
 
-        // Verificar si la pregunta está activa
         if (!$question->is_active) {
             return response()->json(['message' => 'Esta pregunta ya no está activa'], 410);
         }
@@ -103,7 +102,6 @@ class QuestionController extends Controller
             return response()->json(['message' => 'Ya respondiste esta pregunta.'], 409);
         }
 
-        // Verificar si el usuario tiene maná suficiente
         $userStats = UserClassroomStats::where('user_id', Auth::id())
             ->where('classroom_id', $question->classroom_id)
             ->first();
@@ -125,11 +123,9 @@ class QuestionController extends Controller
             'is_correct' => $isCorrect,
         ]);
 
-        // SIEMPRE restar 1 de maná por responder (correcto o incorrecto)
         $remainingMp = $userStats->useMana(1);
 
         if ($isCorrect) {
-            // USAR EL SERVICIO EN LUGAR DEL MÉTODO DEL MODELO
             $userId = Auth::user();
             $user = User::find($userId->id);
 
@@ -152,7 +148,6 @@ class QuestionController extends Controller
             ], 200);
         } else {
 
-            // Respuesta incorrecta: -HP
             $remainingHp = $userStats->takeDamage(10);
 
             return response()->json([
@@ -190,7 +185,6 @@ class QuestionController extends Controller
         ], 200);
     }
 
-    // Endpoint para cerrar/desactivar pregunta
     public function closeQuestion($questionId)
     {
         $question = Question::find($questionId);
@@ -199,7 +193,6 @@ class QuestionController extends Controller
             return response()->json(['message' => 'Question not found'], 404);
         }
 
-        // Verificar que el usuario sea el profesor que creó la pregunta
         if ($question->user_id !== Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
@@ -214,7 +207,6 @@ class QuestionController extends Controller
         return response()->json(['message' => 'Question closed successfully'], 200);
     }
 
-    // Endpoint para obtener todas las preguntas (activas e inactivas) - solo para profesores
     public function getAllQuestionsByClassroom($classroomId)
     {
         $questions = Question::where('classroom_id', $classroomId)
@@ -253,18 +245,15 @@ class QuestionController extends Controller
             return response()->json(['error' => $validator->errors()], 422);
         }
 
-        // Verificar que el classroom existe
         $classroom = Classroom::find($classroomId);
         if (!$classroom) {
             return response()->json(['message' => 'Classroom not found'], 404);
         }
 
-        // Verificar que el usuario autenticado es el profesor del classroom
         if ($classroom->professor_id !== Auth::id()) {
             return response()->json(['message' => 'Unauthorized. Only the professor can reward students'], 403);
         }
 
-        // Verificar que el estudiante está en el classroom
         $studentId = $request->userId;
         if (!$classroom->users()->where('user_id', $studentId)->exists()) {
             return response()->json(['message' => 'Student is not enrolled in this classroom'], 404);
@@ -275,7 +264,6 @@ class QuestionController extends Controller
             return response()->json(['message' => 'Student not found'], 404);
         }
 
-        // Obtener stats del estudiante en este classroom
         $userStats = UserClassroomStats::where('user_id', $studentId)
             ->where('classroom_id', $classroomId)
             ->first();
@@ -286,7 +274,6 @@ class QuestionController extends Controller
 
         $rewards = [];
 
-        // Aplicar recompensas
         if ($request->has('gold') && $request->gold > 0) {
             $student->gold += $request->gold;
             $rewards['gold_gained'] = $request->gold;
@@ -325,7 +312,6 @@ class QuestionController extends Controller
         ], 200);
     }
 
-    // Función para penalizar a un estudiante
     public function penalizeStudent(Request $request, $classroomId)
     {
         $validator = Validator::make($request->all(), [
@@ -338,18 +324,15 @@ class QuestionController extends Controller
             return response()->json(['error' => $validator->errors()], 422);
         }
 
-        // Verificar que el classroom existe
         $classroom = Classroom::find($classroomId);
         if (!$classroom) {
             return response()->json(['message' => 'Classroom not found'], 404);
         }
 
-        // Verificar que el usuario autenticado es el profesor del classroom
         if ($classroom->professor_id !== Auth::id()) {
             return response()->json(['message' => 'Unauthorized. Only the professor can penalize students'], 403);
         }
 
-        // Verificar que el estudiante está en el classroom
         $studentId = $request->userId;
         if (!$classroom->users()->where('user_id', $studentId)->exists()) {
             return response()->json(['message' => 'Student is not enrolled in this classroom'], 404);
@@ -360,7 +343,6 @@ class QuestionController extends Controller
             return response()->json(['message' => 'Student not found'], 404);
         }
 
-        // Obtener stats del estudiante en este classroom
         $userStats = UserClassroomStats::where('user_id', $studentId)
             ->where('classroom_id', $classroomId)
             ->first();
@@ -371,7 +353,6 @@ class QuestionController extends Controller
 
         $penalties = [];
 
-        // Aplicar penalizaciones (SIN quitar maná como mencionaste)
         if ($request->has('hp') && $request->hp > 0) {
             $remainingHp = $userStats->takeDamage($request->hp);
             $penalties['hp_lost'] = $request->hp;

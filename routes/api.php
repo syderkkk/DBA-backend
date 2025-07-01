@@ -12,12 +12,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 
-// RUTAS PUBLICAS
+
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
 
-
-// RUTAS PRIVADAS
 Route::middleware([IsUserAuth::class])->group(function () {
 
 
@@ -62,24 +60,21 @@ Route::middleware([IsUserAuth::class])->group(function () {
             Route::post('classroom/{id}/add-user', 'addUserToClassroom');
             Route::post('classroom/{id}/remove-user', 'removeUserFromClassroom');
 
-
-            //
             Route::get('classroom', 'getClassroomsByProfessor');
-            //
         });
 
         Route::controller(CharacterController::class)->group(function () {
-            Route::get('character', 'getMyCharacter');           // Mi personaje global
-            Route::patch('character', 'updateCharacter');        // Actualizar mi personaje
-            Route::get('classroom/{id}/characters', 'getCharactersByClassroom'); // Ver personajes en clase
+            Route::get('character', 'getMyCharacter');
+            Route::patch('character', 'updateCharacter');
+            Route::get('classroom/{id}/characters', 'getCharactersByClassroom');
         });
 
         Route::controller(QuestionController::class)->group(function () {
             Route::post('classroom/{id}/question', 'createQuestion');
             Route::get('question/{id}/stats', 'getQuestionStats');
 
-            Route::patch('question/{id}/close', 'closeQuestion'); // Cerrar pregunta
-            Route::get('classroom/{id}/all-questions', 'getAllQuestionsByClassroom');  // Todas las preguntas
+            Route::patch('question/{id}/close', 'closeQuestion');
+            Route::get('classroom/{id}/all-questions', 'getAllQuestionsByClassroom');
 
             Route::post('classroom/{id}/reward-student', 'rewardStudent');
             Route::post('classroom/{id}/penalize-student', 'penalizeStudent');
